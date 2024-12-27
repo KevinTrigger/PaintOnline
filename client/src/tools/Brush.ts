@@ -4,8 +4,8 @@ export default class Brush extends Tool {
 
   public mouseDown: boolean = false;
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
+  constructor(canvas: HTMLCanvasElement, socket: WebSocket, id: string) {
+    super(canvas, socket, id);
     this.listen();
   }
 
@@ -17,6 +17,14 @@ export default class Brush extends Tool {
 
   mouseUpHandler = () => {
     this.mouseDown = false;
+
+    this.socket.send(JSON.stringify({
+      method: 'draw',
+      id: this.id,
+      figure: {
+        type: 'finish',
+      }
+    }))
   }
 
   mouseDownHandler(e: MouseEvent) {
@@ -33,12 +41,21 @@ export default class Brush extends Tool {
     if (this.mouseDown && e.target instanceof HTMLCanvasElement) {
       const x = e.pageX - e.target.offsetLeft;
       const y = e.pageY - e.target.offsetTop;
-      this.draw(x, y);
+      // this.draw(x, y);
+      this.socket.send(JSON.stringify({
+        method: 'draw',
+        id: this.id,
+        figure: {
+          type: 'brush',
+          x,
+          y
+        }
+      }))
     }
   }
 
-  draw(x: number, y: number) {
-    this.ctx.lineTo(x, y);
-    this.ctx.stroke();
+  static draw(ctx: CanvasRenderingContext2D, x: number, y: number) {
+    ctx.lineTo(x, y);
+    ctx.stroke();
   }
 }
